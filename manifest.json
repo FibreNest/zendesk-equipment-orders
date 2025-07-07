@@ -1,0 +1,30 @@
+{
+  "name": "Equipment Order",
+  "author": {
+    "name": "Cristian Nita",
+    "email": "cristian.nita@fibrenest.com"
+  },
+  "defaultLocale": "en",
+  "private": true,
+  "version": "1.0",
+  "frameworkVersion": "2.0",
+  "assets": {
+    "logo.png": {
+      "path": "assets/logo.png"
+    }
+  },
+  "location": {
+    "support": {
+      "ticket_sidebar": "assets/iframe.html"
+    }
+  },
+  "locations": {
+    "ticket_sidebar": {
+      "url": "assets/iframe.html",
+      "icon": "assets/logo.png"
+    },
+    "modal": {
+      "url": "assets/order_form.html"
+    }
+  }
+}

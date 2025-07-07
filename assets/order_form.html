@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Place Order</title>
+  <script src="https://assets.zendesk.com/apps/sdk/2.0/zaf_sdk.js"></script>
+  <style>
+    body, #order-form {
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      font-size: 16px;
+      background: #f7f8fa;
+    }
+    .main-modal-box {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1.5px 4px rgba(0,0,0,0.03);
+      padding: 16px 20px 0px 20px;
+      margin: 0 auto;
+      max-width: 1200px;
+      width: 100%;
+      max-height: 90vh;
+      box-sizing: border-box;
+      overflow: auto;
+      position: relative;
+    }
+    .form-title {
+      font-size: 1.25em;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .form-title .icon {
+      font-size: 1.2em;
+      color: #2563eb;
+    }
+    .section-card {
+      background: #fafbfc;
+      border-radius: 12px;
+      border: 1px solid #e0e3ea;
+      padding: 18px 16px;
+      margin-bottom: 24px;
+      font-size: 1em;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .section-header {
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 1.08em;
+    }
+    .form-row, .inline-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      padding-right: 20px;
+    }
+    .form-row label, .inline-group label {
+      min-width: 140px;
+      font-weight: 600;
+      font-size: 0.95em;
+      text-align: right;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .form-row input, .inline-group input, .inline-group select {
+      flex: 1;
+      min-width: 0;
+      font-size: 1em;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #e0e3ea;
+      background: #fff;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .inline-group input[type="number"] {
+      width: 60px;
+      min-width: 60px;
+      max-width: 80px;
+      text-align: center;
+    }
+    .qty-label {
+      min-width: 80px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 0.95em;
+      align-self: center;
+    }
+    .change-address-btn, .save-address-btn, .get-address-btn {
+      background-color: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 0.95em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-left: 8px;
+    }
+    .change-address-btn:hover, .save-address-btn:hover, .get-address-btn:hover {
+      background-color: #1746a2;
+    }
+    .get-address-btn:disabled {
+      background-color: #cccccc;
+      color: #666666;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .button-group {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .button-group button {
+      padding: 12px 0;
+      font-size: 1em;
+      width: 140px;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    #cancelButton {
+      background-color: #e53935;
+      color: #fff;
+    }
+    #cancelButton:hover {
+      background-color: #b71c1c;
+    }
+    #confirmOrderButton {
+      background-color: #2563eb;
+      color: #fff;
+    }
+    #confirmOrderButton:disabled {
+      background-color: #b0b8c9;
+      color: #fff;
+      cursor: not-allowed;
+    }
+    #confirmOrderButton:hover:enabled {
+      background-color: #1746a2;
+    }
+    .status-and-buttons-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      margin-top: 20px;
+      border: none;
+      padding: 0;
+      background: none;
+      border-radius: 0;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 24px 32px;
+      border-radius: 12px;
+      color: #065f46;
+      font-weight: 600;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+      max-width: 350px;
+      min-width: 260px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15em;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.04);
+      background: #fff;
+    }
+    .notification.error {
+      background: #fee2e2;
+      color: #222;
+      border: 1.5px solid #f87171;
+      box-shadow: 0 6px 32px rgba(248, 113, 113, 0.10), 0 2px 8px rgba(248, 113, 113, 0.04);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.15em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 32px;
+      min-width: 260px;
+      min-height: 60px;
+      max-width: 350px;
+    }
+    .notification.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1.5px solid #34d399;
+      box-shadow: 0 6px 32px rgba(52, 211, 153, 0.10), 0 2px 8px rgba(52, 211, 153, 0.04);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.15em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 32px;
+      min-width: 260px;
+      min-height: 60px;
+      max-width: 350px;
+    }
+    .notification.warning {
+      background: #d1fae5;
+      color: #222;
+      border: 1.5px solid #34d399;
+      box-shadow: 0 6px 32px rgba(52, 211, 153, 0.10), 0 2px 8px rgba(52, 211, 153, 0.04);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.15em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 32px;
+      min-width: 260px;
+      min-height: 60px;
+      max-width: 350px;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ccc;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.5em;
+      color: #2f3941;
+    }
+    .close-button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #68737d;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .close-button:hover {
+      color: #2f3941;
+    }
+    .dates-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      border: none;
+      width: 100%;
+    }
+    .date-card {
+      background: none;
+      border: none;
+      padding: 0;
+      min-width: unset;
+      flex: unset;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .date-label {
+      font-size: 1em;
+      color: #68737d;
+      font-weight: 600;
+      margin-bottom: 0;
+      margin-right: 4px;
+    }
+    .date-value {
+      font-weight: 700;
+      color: #2f3941;
+      font-size: 1em;
+      background: #f5f6fa;
+      border-radius: 4px;
+      padding: 2px 8px;
+      border: 1px solid #e0e3ea;
+      margin-top: 0;
+      display: inline-block;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .inline-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      justify-content: flex-start;
+    }
+    .inline-group label {
+      min-width: 110px;
+      font-weight: 600;
+      font-size: 0.95em;
+      text-align: left;
+      margin-right: 10px;
+    }
+    .error-popup, .notification.sticky, .notification.warning, .notification.error {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+      padding: 18px 28px 50px 28px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 9999;
+      display: block;
+      max-width: 90vw;
+      font-size: 0.9em;
+      opacity: 1 !important;
+      border: 2px solid #ff9800 !important;
+    }
+    
+    .notification button {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.2) !important;
+      color: #222 !important;
+      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.8em;
+      cursor: pointer;
+    }
+    
+    .notification button:hover {
+      background: rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    /* Specific styling for confirmation dialogs */
+    .confirmation-dialog, div[style*="position: fixed"] {
+      background-color: #fff !important;
+      color: #333 !important;
+      border: 1px solid #ddd !important;
+    }
+    
+    .confirmation-dialog p, div[style*="position: fixed"] p {
+      color: #333 !important;
+      font-weight: normal !important;
+    }
+
+    #order-form {
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .input-error {
+      border: 2px solid #e53935 !important;
+      background-color: #fff0f0;
+    }
+
+    /* Add to CSS section */
+    .mandatory-checkbox-label {
+      color: #e53935;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .mandatory-checkbox-label.checked {
+      color: inherit;
+    }
+    .mandatory-checkbox {
+      accent-color: #e53935;
+      width: 18px;
+      height: 18px;
+    }
+
+    .notification.error button,
+    .notification.error button:active,
+    .notification.error button:focus,
+    .notification.error button:hover {
+      color: #222 !important;
+    }
+
+    #modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(120, 120, 120, 0.35);
+      z-index: 1000;
+      display: none;
+      pointer-events: all;
+    }
+
+    .notification button {
+      color: #222 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="modal-overlay"></div>
+  <div class="main-modal-box">
+    <div id="notification-container"></div>
+    <div id="loading-indicator" style="padding: 20px; text-align: center; font-size: 1.2em; color: #555;">
+      Loading order form...
+    </div>
+    <form id="order-form" class="hidden">
+      <div class="form-title">
+        <span class="icon">📝</span>
+        Place a new order
+      </div>
+      <div class="section-header">Customer Info</div>
+      <div class="section-card" id="customerInfoBox">
+        <div class="form-row">
+          <label for="customer_name">Customer Name:</label>
+          <input type="text" id="customer_name" readonly />
+        </div>
+        <div class="form-row">
+          <label for="email">Email:</label>
+          <input type="email" id="email" readonly />
+        </div>
+        <div class="form-row">
+          <label for="phone">Phone:</label>
+          <input type="text" id="phone" readonly />
+        </div>
+        <div class="form-row">
+          <label for="customer_chargebee_id">Customer Id:</label>
+          <input type="text" id="customer_chargebee_id" readonly />
+        </div>
+        <div class="form-row">
+          <label for="addr1">Address Line 1:</label>
+          <input type="text" id="addr1" readonly />
+        </div>
+        <div class="form-row">
+          <label for="addr2">Address Line 2:</label>
+          <input type="text" id="addr2" readonly />
+        </div>
+        <div class="form-row">
+          <label for="addr3">Address Line 3:</label>
+          <input type="text" id="addr3" readonly />
+        </div>
+        <div class="form-row">
+          <label for="town">Town/City:</label>
+          <input type="text" id="town" readonly />
+        </div>
+        <div class="form-row">
+          <label for="postcode">Post Code:</label>
+          <input type="text" id="postcode" readonly />
+        </div>
+        <div class="form-row" id="addressConfirmRow" style="margin-bottom: 0;">
+          <label class="mandatory-checkbox-label" id="addressConfirmLabel">
+            <input type="checkbox" id="addressConfirmed" class="mandatory-checkbox" />
+            I confirm the address has been verified with the customer. <span style="color:#e53935;">*</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Add Change Delivery Address Link -->
+      <div class="form-row" id="addressActionsRow" style="justify-content: flex-end; margin-top: -5px; margin-bottom: 15px; gap: 10px;">
+        <button type="button" class="get-address-btn" id="getAddressBtn" disabled style="display: none;">Get Address</button>
+        <button type="button" class="change-address-btn" id="changeAddressBtn">Change Delivery Address</button>
+        <button type="button" class="save-address-btn" id="saveAddressBtn" style="display: none;">Save</button>
+      </div>
+
+      <div class="section-header">Order Details</div>
+      <div class="section-card">
+        <div class="form-row" style="display: none;">
+          <label for="orderId">Order ID:</label>
+          <input type="text" id="orderId" readonly required>
+        </div>
+        <div class="dates-row">
+          <div class="date-card">
+            <span class="date-label">Order Date:</span>
+            <span class="date-value" id="order_date_text"></span>
+          </div>
+          <div class="date-card">
+            <span class="date-label">Expected Delivery Date:</span>
+            <span class="date-value" id="delivery_date_text"></span>
+          </div>
+        </div>
+
+    <div id="orderItems">
+      <div style="display: flex; gap: 20px; margin-bottom: 8px;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; margin-bottom: 4px;">Ordered Item</div>
+        </div>
+        <div style="width: 120px; display: flex; align-items: flex-end;">
+          <div style="font-weight: 600; margin-bottom: 4px; padding-bottom: 6px; width: 100%; text-align: center;">Quantity</div>
+        </div>
+        <div style="width: 80px;"><!-- Space for remove button --></div>
+      </div>
+
+      <div class="inline-group" id="order1">
+        <select id="item1" style="flex: 1;">
+          <option value="">Select item</option>
+          <option value="dns">DNS</option>
+          <option value="router_upgrade">Router Upgrade</option>
+          <option value="pod_order">Pod Order</option>
+          <option value="wifi_guarantee_order">Wi-Fi Guarantee Order</option>
+          <option value="existing_wifi_guarantee_order">Existing Customer Wi-Fi Guarantee Order</option>
+          <option value="returns_bag">Returns Bag</option>
+          <option value="ethernet_cable">Ethernet Cable</option>
+          <option value="power_cable">Power Cable</option>
+        </select>
+        <input type="number" id="qty1" min="0" value="0" style="width: 120px;" />
+        <button type="button" class="remove-item-btn" disabled style="background: #e0e3ea; color: #b0b8c9; cursor: not-allowed; width: 80px;">Remove</button>
+      </div>
+
+      <div class="inline-group hidden" id="order2">
+        <select id="item2" style="flex: 1;">
+          <option value="">Select item</option>
+          <option value="dns">DNS</option>
+          <option value="router_upgrade">Router Upgrade</option>
+          <option value="pod_order">Pod Order</option>
+          <option value="wifi_guarantee_order">Wi-Fi Guarantee Order</option>
+          <option value="existing_wifi_guarantee_order">Existing Customer Wi-Fi Guarantee Order</option>
+          <option value="returns_bag">Returns Bag</option>
+          <option value="ethernet_cable">Ethernet Cable</option>
+          <option value="power_cable">Power Cable</option>
+        </select>
+        <input type="number" id="qty2" min="0" value="0" style="width: 120px;" />
+        <button type="button" class="remove-item-btn" data-target="order2" style="width: 80px;">Remove</button>
+      </div>
+
+      <div class="inline-group hidden" id="order3">
+        <select id="item3" style="flex: 1;">
+          <option value="">Select item</option>
+          <option value="dns">DNS</option>
+          <option value="router_upgrade">Router Upgrade</option>
+          <option value="pod_order">Pod Order</option>
+          <option value="wifi_guarantee_order">Wi-Fi Guarantee Order</option>
+          <option value="existing_wifi_guarantee_order">Existing Customer Wi-Fi Guarantee Order</option>
+          <option value="returns_bag">Returns Bag</option>
+          <option value="ethernet_cable">Ethernet Cable</option>
+          <option value="power_cable">Power Cable</option>
+        </select>
+        <input type="number" id="qty3" min="0" value="0" style="width: 120px;" />
+        <button type="button" class="remove-item-btn" data-target="order3" style="width: 80px;">Remove</button>
+      </div>
+    </div>
+
+    <button type="button" id="addItemBtn">Add Another Order Item</button>
+
+    <br /><br />
+      <div class="status-and-buttons-group">
+        <div class="button-group">
+          <button type="button" id="cancelButton">CANCEL</button>
+          <button type="submit" id="confirmOrderButton" disabled>SUBMIT</button>
+        </div>
+      </div>
+  </form>
+  </div>
+
+  <script>
+    // Add notification function
+    function showNotification(message, type = 'error', sticky = false) {
+      const container = document.getElementById('notification-container');
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      
+      const messageSpan = document.createElement('span');
+      messageSpan.innerHTML = message;
+      notification.appendChild(messageSpan);
+
+      if (sticky) {
+        const dismissButton = document.createElement('button');
+        dismissButton.textContent = 'Dismiss';
+        dismissButton.style.marginLeft = '10px';
+        dismissButton.style.padding = '5px 10px';
+        dismissButton.style.borderRadius = '4px';
+        dismissButton.style.cursor = 'pointer';
+        dismissButton.style.fontWeight = 'bold';
+        dismissButton.addEventListener('click', () => {
+          notification.remove();
+        });
+        notification.appendChild(dismissButton);
+      } else {
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => notification.remove(), 300);
+        }, 5000);
+      }
+
+      container.appendChild(notification);
+    }
+
+    // Update showConfirmationDialog to accept a second parameter for details
+    function showConfirmationDialog(message, detailsHtml) {
+      // Show the overlay
+      var overlay = document.getElementById('modal-overlay');
+      if (overlay) overlay.style.display = 'block';
+      return new Promise((resolve) => {
+        const dialog = document.createElement('div');
+        dialog.className = 'confirmation-dialog';
+        dialog.style.position = 'fixed';
+        dialog.style.top = '50%';
+        dialog.style.left = '50%';
+        dialog.style.transform = 'translate(-50%, -50%)';
+        dialog.style.zIndex = '1001';
+        dialog.style.padding = '20px';
+        dialog.style.backgroundColor = 'rgba(255,255,255,0.85)';
+        dialog.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+        dialog.style.borderRadius = '8px';
+        dialog.style.maxWidth = '600px';
+        dialog.style.width = '95%';
+        dialog.style.border = '1px solid #ddd';
+        
+        const messageEl = document.createElement('p');
+        messageEl.textContent = message;
+        messageEl.style.marginBottom = '20px';
+        messageEl.style.textAlign = 'center';
+        messageEl.style.color = '#333';
+        messageEl.style.fontWeight = 'normal';
+        dialog.appendChild(messageEl);
+
+        if (detailsHtml) {
+          const detailsDiv = document.createElement('div');
+          detailsDiv.innerHTML = detailsHtml;
+          detailsDiv.style.marginBottom = '20px';
+          detailsDiv.style.fontSize = '0.97em';
+          detailsDiv.style.background = 'rgba(255,255,255,0.6)';
+          detailsDiv.style.border = '1px solid #e0e3ea';
+          detailsDiv.style.borderRadius = '6px';
+          detailsDiv.style.padding = '14px 16px';
+          detailsDiv.style.color = '#222';
+          detailsDiv.style.whiteSpace = 'pre-line';
+          dialog.appendChild(detailsDiv);
+        }
+
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'center';
+        buttonContainer.style.gap = '10px';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.style.padding = '8px 20px';
+        cancelBtn.style.backgroundColor = '#dc3545';
+        cancelBtn.style.color = '#fff';
+        cancelBtn.style.border = 'none';
+        cancelBtn.style.borderRadius = '4px';
+        cancelBtn.style.cursor = 'pointer';
+        
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Submit';
+        confirmBtn.style.padding = '8px 20px';
+        confirmBtn.style.backgroundColor = '#28a745';
+        confirmBtn.style.color = '#fff';
+        confirmBtn.style.border = 'none';
+        confirmBtn.style.borderRadius = '4px';
+        confirmBtn.style.cursor = 'pointer';
+        
+        buttonContainer.appendChild(cancelBtn);
+        buttonContainer.appendChild(confirmBtn);
+        
+        dialog.appendChild(buttonContainer);
+        document.body.appendChild(dialog);
+        
+        confirmBtn.onclick = () => {
+          document.body.removeChild(dialog);
+          if (overlay) overlay.style.display = 'block'; // keep overlay visible after confirmation
+          resolve(true);
+        };
+        
+        cancelBtn.onclick = () => {
+          document.body.removeChild(dialog);
+          if (overlay) overlay.style.display = 'none';
+          resolve(false);
+        };
+      });
+    }
+
+    // Add error handling function for fetch calls
+    async function handleLogicAppCall(endpoint, data) {
+      try {
+        console.log('Making Logic App call with data:', data);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.status === 404) {
+          console.error('Logic App endpoint not found (404)');
+          showNotification('Customer Not Found', 'error', true);
+          return null;
+        }
+
+        if (!response.ok) {
+          console.error('Logic App call failed:', response.status, response.statusText);
+          const errorData = await response.json().catch(() => null);
+          const errorMessage = errorData && errorData.body && errorData.body.error ? errorData.body.error : `Request failed: ${response.statusText}`;
+          showNotification(errorMessage, 'error', true);
+          return null;
+        }
+
+        const result = await response.json();
+        console.log('Logic App response:', result);
+        return result;
+      } catch (error) {
+        console.error('Logic App call error:', error);
+        showNotification('Failed to connect to server', 'error', true);
+        return null;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      let client;
+      try {
+        client = ZAFClient.init();
+      } catch (error) {
+        console.error('Failed to initialize Zendesk client:', error);
+        showNotification('Failed to initialize the form. Please try again.', 'error', true);
+        return;
+      }
+
+      // Get all customer info input fields (declare once)
+      const customerInfoFields = [
+        'customer_name', 'email', 'phone', 'customer_chargebee_id',
+        'addr1', 'addr2', 'addr3', 'town', 'postcode'
+      ].map(id => document.getElementById(id));
+
+      // Set all customer info fields to readonly and greyed out on load
+      customerInfoFields.forEach(field => {
+        if (field) {
+          field.setAttribute('readonly', true);
+          field.style.backgroundColor = '#f5f5f5';
+          field.style.color = '#666';
+          field.style.cursor = 'not-allowed';
+        }
+      });
+
+      // Set order date and expected delivery date immediately (does not depend on context)
+      const today = new Date();
+      const orderDateStr = today.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+      document.getElementById('order_date_text').innerText = orderDateStr;
+
+    let deliveryDate = new Date(today);
+    let added = 0;
+    while (added < 2) {
+      deliveryDate.setDate(deliveryDate.getDate() + 1);
+      if (![0, 6].includes(deliveryDate.getDay())) added++;
+    }
+      const deliveryDateStr = deliveryDate.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+      document.getElementById('delivery_date_text').innerText = deliveryDateStr;
+
+      // Function to validate order items and update confirm button state
+      function validateOrderItems() {
+        const item1 = document.getElementById('item1').value;
+        const qty1 = parseInt(document.getElementById('qty1').value) || 0;
+        const item2 = document.getElementById('item2').value;
+        const qty2 = parseInt(document.getElementById('qty2').value) || 0;
+        const item3 = document.getElementById('item3').value;
+        const qty3 = parseInt(document.getElementById('qty3').value) || 0;
+
+        const confirmButton = document.getElementById('confirmOrderButton');
+        
+        // Check if any item is selected and has quantity > 0
+        const hasValidOrder = (item1 && qty1 > 0) || 
+                            (item2 && qty2 > 0) || 
+                            (item3 && qty3 > 0);
+
+        // Check if any selected item has quantity = 0
+        const hasZeroQuantity = (item1 && qty1 === 0) || 
+                              (item2 && qty2 === 0) || 
+                              (item3 && qty3 === 0);
+
+        // Check if visible optional items are still 'Select item'
+        const isOrder2Visible = !document.getElementById('order2').classList.contains('hidden');
+        const isOrder3Visible = !document.getElementById('order3').classList.contains('hidden');
+        
+        const hasUnselectedVisibleOptionalItems = 
+          (isOrder2Visible && item2 === "") || 
+          (isOrder3Visible && item3 === "");
+
+        // Check if required customer info fields are filled
+        const customerName = document.getElementById('customer_name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const addr1 = document.getElementById('addr1').value.trim();
+        const town = document.getElementById('town').value.trim();
+        const postcode = document.getElementById('postcode').value.trim();
+        const customerChargebeeId = document.getElementById('customer_chargebee_id').value.trim();
+
+        const hasRequiredCustomerInfo = customerName && email && phone && addr1 && town && postcode && customerChargebeeId;
+
+        // Disable confirm button if no valid order, or if any selected item has zero quantity, or if required customer info is missing
+        confirmButton.disabled = !hasValidOrder || hasZeroQuantity || !hasRequiredCustomerInfo || hasUnselectedVisibleOptionalItems;
+
+        // Add this to the CSS section
+        const requiredCustomerFields = [
+          'customer_name', 'email', 'phone', 'customer_chargebee_id', 'addr1', 'town', 'postcode'
+        ];
+        requiredCustomerFields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            if (!el.value.trim()) {
+              el.classList.add('input-error');
+            } else {
+              el.classList.remove('input-error');
+            }
+          }
+        });
+
+        // Add below postcode field in the form:
+        const addressCheckbox = document.getElementById('addressConfirmed');
+        const addressLabel = document.getElementById('addressConfirmLabel');
+        if (addressCheckbox && !addressCheckbox.checked) {
+          addressLabel.classList.remove('checked');
+          confirmButton.disabled = true;
+        } else if (addressLabel) {
+          addressLabel.classList.add('checked');
+        }
+      }
+
+      // Add event listeners for item selection and quantity changes
+      document.getElementById('item1').addEventListener('change', validateOrderItems);
+      document.getElementById('qty1').addEventListener('input', validateOrderItems);
+      document.getElementById('item2').addEventListener('change', validateOrderItems);
+      document.getElementById('qty2').addEventListener('input', validateOrderItems);
+      document.getElementById('item3').addEventListener('change', validateOrderItems);
+      document.getElementById('qty3').addEventListener('input', validateOrderItems);
+
+      // Add input event listeners for customer info fields to trigger validation
+      ['customer_name', 'email', 'phone', 'addr1', 'town', 'postcode', 'customer_chargebee_id'].forEach(id => {
+        const inputElement = document.getElementById(id);
+        if (inputElement) {
+          inputElement.addEventListener('input', validateOrderItems);
+        }
+      });
+
+      // Add input event listeners to strip leading zeros and ensure integer input
+      const qtyInputs = ['qty1', 'qty2', 'qty3'];
+      qtyInputs.forEach((qtyId, idx) => {
+        const inputElement = document.getElementById(qtyId);
+        const itemId = 'item' + (idx + 1);
+        inputElement.addEventListener('input', function() {
+          if (this.value !== '') {
+            const parsedValue = parseInt(this.value, 10);
+            if (isNaN(parsedValue)) {
+              this.value = '';
+            } else {
+              // Use the correct max from itemMaxQty
+              const itemValue = document.getElementById(itemId).value;
+              const max = itemMaxQty[itemValue] || 4;
+              this.value = Math.min(parsedValue, max);
+            }
+          }
+        });
+      });
+
+      // Order type mapping
+      const orderTypeMap = {
+        'DNS': 'B2C1',
+        'Router Upgrade': 'B2C2',
+        'Pod Order': 'B2C3',
+        'Wi-Fi Guarantee Order': 'B2C4',
+        'Existing Customer Wi-Fi Guarantee Order': 'B2C5',
+        'Returns Bag': 'B2C6',
+        'Ethernet Cable': 'B2C7',
+        'Power Cable': 'B2C8'
+      };
+      const getOrderType = (itemName) => orderTypeMap[itemName] || "";
+
+      // Add event listener to the 'Change Delivery Address' button
+      document.getElementById('changeAddressBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        // Make fields editable by removing the readonly attribute and restoring normal styling
+        customerInfoFields.forEach(field => {
+          if (field) {
+            field.removeAttribute('readonly');
+            field.style.backgroundColor = '#fff';
+            field.style.color = '#333';
+            field.style.cursor = 'text';
+          }
+        });
+        // Hide the 'Change Delivery Address' button
+        this.style.display = 'none';
+        // Show the Save button
+        document.getElementById('saveAddressBtn').style.display = '';
+      });
+      
+      // Add event listener to the 'Save' button
+      document.getElementById('saveAddressBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        // After saving, make fields readonly again and grey them out
+        customerInfoFields.forEach(field => {
+          if (field) {
+            field.setAttribute('readonly', true);
+            field.style.backgroundColor = '#f5f5f5';
+            field.style.color = '#666';
+            field.style.cursor = 'not-allowed';
+          }
+        });
+        // Hide the Save button
+        document.getElementById('saveAddressBtn').style.display = 'none';
+        // Show the Change Delivery Address button again
+        document.getElementById('changeAddressBtn').style.display = '';
+        // (Optional) Add logic here to persist the address changes if needed
+      });
+
+      // Add event listener for the Cancel button
+      document.getElementById('cancelButton').addEventListener('click', function() {
+        client.invoke('destroy'); // Close the modal
+      });
+
+      // Add validation for UK phone number format
+      function isValidUKPhoneNumber(phone) {
+        // Must start with 0, be 11 digits, and contain only digits
+        return /^0\d{10}$/.test(phone);
+      }
+
+      // Live validation for phone number and Save button
+      const phoneInput = document.getElementById('phone');
+      const saveAddressBtn = document.getElementById('saveAddressBtn');
+      if (phoneInput && saveAddressBtn) {
+        phoneInput.addEventListener('input', function() {
+          if (!isValidUKPhoneNumber(phoneInput.value.trim())) {
+            phoneInput.classList.add('input-error');
+            saveAddressBtn.disabled = true;
+          } else {
+            phoneInput.classList.remove('input-error');
+            saveAddressBtn.disabled = false;
+          }
+        });
+      }
+
+      // When entering edit mode, trigger validation
+      document.getElementById('changeAddressBtn').addEventListener('click', function() {
+        if (phoneInput && saveAddressBtn) {
+          if (!isValidUKPhoneNumber(phoneInput.value.trim())) {
+            phoneInput.classList.add('input-error');
+            saveAddressBtn.disabled = true;
+          } else {
+            phoneInput.classList.remove('input-error');
+            saveAddressBtn.disabled = false;
+          }
+        }
+      });
+
+      // Prevent Save if phone is invalid
+      document.getElementById('saveAddressBtn').addEventListener('click', function(e) {
+        if (phoneInput && !isValidUKPhoneNumber(phoneInput.value.trim())) {
+          phoneInput.classList.add('input-error');
+          saveAddressBtn.disabled = true;
+          showNotification('Please enter a valid UK phone number (11 digits, starts with 0, no spaces).', 'error', true);
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // Update the form submission handler
+      document.getElementById('order-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        document.getElementById('modal-overlay').style.display = 'block';
+
+        // Validate UK phone number
+        const phoneValue = document.getElementById('phone').value.trim();
+        if (!isValidUKPhoneNumber(phoneValue)) {
+          showNotification('Please enter a valid UK phone number (11 digits, starts with 0, no spaces).', 'error', true);
+          return;
+        }
+
+        // Basic validation
+        const requiredFields = ['customer_name', 'email', 'customer_chargebee_id', 'addr1', 'town', 'postcode'];
+        const missingFields = requiredFields.filter(field => !document.getElementById(field).value.trim());
+
+        if (missingFields.length > 0) {
+          console.error('Missing required fields:', missingFields);
+          showNotification(`Please fill in all required fields: ${missingFields.join(', ')}`, 'error', true);
+          return;
+        }
+
+        // Validate that at least one item is ordered
+        const item1 = document.getElementById('item1').value;
+        const qty1 = parseInt(document.getElementById('qty1').value) || 0;
+        const item2 = document.getElementById('item2').value;
+        const qty2 = parseInt(document.getElementById('qty2').value) || 0;
+        const item3 = document.getElementById('item3').value;
+        const qty3 = parseInt(document.getElementById('qty3').value) || 0;
+
+        const hasOrderedItems = (item1 && qty1 > 0) || 
+                              (item2 && qty2 > 0) || 
+                              (item3 && qty3 > 0);
+
+        if (!hasOrderedItems) {
+          showNotification('Please select at least one item and specify its quantity', 'error', true);
+          return;
+        }
+
+        // Validate that no selected item has zero quantity
+        const hasZeroQuantity = (item1 && qty1 === 0) || 
+                              (item2 && qty2 === 0) || 
+                              (item3 && qty3 === 0);
+
+        if (hasZeroQuantity) {
+          showNotification('Please specify a quantity greater than 0 for selected items', 'error', true);
+          return;
+        }
+
+        // Build the order details and pass to showConfirmationDialog
+        const customerDetails = [
+          `<strong>Customer:</strong> ${document.getElementById('customer_name').value}`,
+          `<strong>Email:</strong> ${document.getElementById('email').value}`,
+          `<strong>Phone:</strong> ${document.getElementById('phone').value}`,
+          `<strong>Address:</strong> ${document.getElementById('addr1').value}, ${document.getElementById('town').value}, ${document.getElementById('postcode').value}`
+        ];
+        const partNumbers = {
+          'DNS': '17600030F2P',
+          'Router Upgrade': '17600030F2P',
+          'Pod Order': '17600030F2P',
+          'Wi-Fi Guarantee Order': '17600030F2P',
+          'Existing Customer Wi-Fi Guarantee Order': '17600030F2P',
+          'Returns Bag': 'FNESTRTNBAG1',
+          'Ethernet Cable': 'L67-8010',
+          'Power Cable': '17600093F1'
+        };
+        const orderDetails = [];
+        if (item1) {
+          const item1Text = document.getElementById('item1').options[document.getElementById('item1').selectedIndex].text;
+          orderDetails.push(`Item: ${item1Text} | Quantity: ${qty1} | Part Number: ${partNumbers[item1Text] || ''}`);
+        }
+        if (item2) {
+          const item2Text = document.getElementById('item2').options[document.getElementById('item2').selectedIndex].text;
+          orderDetails.push(`Item: ${item2Text} | Quantity: ${qty2} | Part Number: ${partNumbers[item2Text] || ''}`);
+        }
+        if (item3) {
+          const item3Text = document.getElementById('item3').options[document.getElementById('item3').selectedIndex].text;
+          orderDetails.push(`Item: ${item3Text} | Quantity: ${qty3} | Part Number: ${partNumbers[item3Text] || ''}`);
+        }
+        const detailsHtml = `
+          <div style='margin-bottom:10px;'>${customerDetails.join('<br>')}</div>
+          ${orderDetails.length ? `<strong>Order Details:</strong><br>${orderDetails.join('<br>')}` : ''}
+        `;
+        const confirmed = await showConfirmationDialog(
+          'Are you sure you want to submit this order?',
+          detailsHtml
+        );
+        if (!confirmed) return;
+
+        // Collect all relevant data
+        const orderData = {
+          customer: {
+            customerName: document.getElementById('customer_name').value.trim(),
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            customer_chargebee_id: document.getElementById('customer_chargebee_id').value,
+            addr1: document.getElementById('addr1').value,
+            addr2: document.getElementById('addr2').value,
+            addr3: document.getElementById('addr3').value,
+            town: document.getElementById('town').value,
+            postcode: document.getElementById('postcode').value,
+          },
+          orderDate: today.toISOString().split('T')[0],
+          deliveryDate: deliveryDate.toISOString().split('T')[0],
+          internal_order_id: document.getElementById('orderId').value,
+          order_id: window._lastTicketId || '',
+          items: [],
+          operation_type: 'newOrder'
+        };
+
+        // Build items array
+        const courierMap = {
+          'DNS': 'DHL',
+          'Router Upgrade': 'DHL',
+          'Pod Order': 'DHL',
+          'Wi-Fi Guarantee Order': 'DHL',
+          'Existing Customer Wi-Fi Guarantee Order': 'DHL',
+          'Returns Bag': 'RM2MAIL',
+          'Ethernet Cable': 'RMT48',
+          'Power Cable': 'RMT48'
+        };
+
+        orderData.items = [];
+        if (item1) {
+          const item1Select = document.getElementById('item1');
+          const item1Text = item1Select.options[item1Select.selectedIndex].text;
+          orderData.items.push({
+            item: document.getElementById('item1').value,
+            item_name: item1Text,
+            qty: document.getElementById('qty1').value,
+            orderType: orderTypeMap[item1Text] || '',
+            courier: courierMap[item1Text] || '',
+            part_number: partNumbers[item1Text] || '',
+            order_line: "1"
+          });
+        }
+        if (item2) {
+          const item2Select = document.getElementById('item2');
+          const item2Text = item2Select.options[item2Select.selectedIndex].text;
+          orderData.items.push({
+            item: document.getElementById('item2').value,
+            item_name: item2Text,
+            qty: document.getElementById('qty2').value,
+            orderType: orderTypeMap[item2Text] || '',
+            courier: courierMap[item2Text] || '',
+            part_number: partNumbers[item2Text] || '',
+            order_line: "2"
+          });
+        }
+        if (item3) {
+          const item3Select = document.getElementById('item3');
+          const item3Text = item3Select.options[item3Select.selectedIndex].text;
+          orderData.items.push({
+            item: document.getElementById('item3').value,
+            item_name: item3Text,
+            qty: document.getElementById('qty3').value,
+            orderType: orderTypeMap[item3Text] || '',
+            courier: courierMap[item3Text] || '',
+            part_number: partNumbers[item3Text] || '',
+            order_line: "3"
+          });
+        }
+
+        // Send to Logic App
+        const result = await handleLogicAppCall(
+          'https://prod-56.uksouth.logic.azure.com:443/workflows/5a48805cd4294992b48588258f61b2c5/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=ytGF1s7uadFaLKMMED0x68hcanpytqZDQ3eK0f5V7zY',
+          orderData
+        );
+
+        if (result) {
+          const successMessage = result.success || 'Order sent successfully!';
+          showNotification(successMessage, 'success', false);
+          setTimeout(() => {
+            document.getElementById('modal-overlay').style.display = 'none';
+            client.invoke('destroy');
+          }, 2000); // Give user time to read the message
+        } else {
+          // Attach a callback to the error notification's dismiss button to close the modal
+          setTimeout(() => {
+            const notif = document.querySelector('.notification.error');
+            if (notif) {
+              const btn = notif.querySelector('button');
+              if (btn) {
+                btn.addEventListener('click', () => {
+                  client.invoke('destroy');
+                });
+              }
+            }
+          }, 0);
+        }
+      });
+
+      // Add event listener for adding new order items
+      document.getElementById('addItemBtn').addEventListener('click', () => {
+        // Show the first hidden order line (order2, then order3)
+        const order2 = document.getElementById('order2');
+        const order3 = document.getElementById('order3');
+        if (order2.classList.contains('hidden')) {
+          order2.classList.remove('hidden');
+        } else if (order3.classList.contains('hidden')) {
+          order3.classList.remove('hidden');
+        }
+        // Disable add button if all are visible
+        if (!order2.classList.contains('hidden') && !order3.classList.contains('hidden')) {
+          document.getElementById('addItemBtn').disabled = true;
+        }
+        validateOrderItems();
+      });
+
+      // Listen for the custom 'ticketDataReady' event triggered by the sidebar
+      client.on('ticketDataReady', function(data) {
+        console.log('*** Modal Received Data Debug ***');
+        console.log('Received Data Object:', data);
+        console.log('Received TicketData:', data && data.ticketData);
+        console.log('Received RequesterData:', data && data.requesterData);
+        console.log('All user fields:', data && data.requesterData && data.requesterData.user_fields);
+        console.log('*** End Debug ***');
+
+        const ticket = data && data.ticketData;
+        const requester = data && data.requesterData;
+
+        if (!ticket || !requester) {
+          console.error('Ticket or requester data not received in modal event!', data);
+          showNotification('Error loading ticket data. Please try reopening the order form.', 'error', true);
+          return;
+        }
+
+        const userFields = requester.user_fields || {};
+        console.log('User Fields Object:', userFields);
+        
+        // Populate basic info fields
+        document.getElementById('customer_name').value = requester.name || '';
+        document.getElementById('email').value = requester.email || '';
+        document.getElementById('phone').value = requester.phone || '';
+        document.getElementById('customer_chargebee_id').value = userFields.customer_chargebee_id || '';
+        
+        const chargebeeId = userFields.customer_chargebee_id;
+        console.log('Chargebee ID:', chargebeeId);
+        window._lastChargebeeId = chargebeeId;
+
+        if (chargebeeId) {
+          handleLogicAppCall(
+            'https://prod-56.uksouth.logic.azure.com:443/workflows/5a48805cd4294992b48588258f61b2c5/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=ytGF1s7uadFaLKMMED0x68hcanpytqZDQ3eK0f5V7zY',
+            { customer_chargebee_id: chargebeeId }
+          ).then(data => {
+            if (data) {
+              // Map the Logic App response fields to our form fields
+              document.getElementById('addr1').value = data.line1 || '';
+              document.getElementById('addr2').value = data.line2 || '';
+              document.getElementById('addr3').value = data.line3 || '';
+              document.getElementById('town').value = data.city || '';
+              document.getElementById('postcode').value = data.zip || '';
+            }
+            validateOrderItems(); // Re-validate after populating address
+          });
+        } else {
+          showNotification('<strong>Chargebee ID is missing.</strong><br>Edit the contact and add the ID.<br>Re-open to place a new order.', 'warning', true);
+          validateOrderItems(); // Re-validate even if address is missing
+        }
+
+        // After customer info is loaded, check for existing order by ticket ID
+        const ticketId = data && data.ticketData && data.ticketData.id;
+        if (ticketId) {
+          // Use the same endpoint and method as cancel order form
+          const logicAppEndpoint = 'https://prod-56.uksouth.logic.azure.com:443/workflows/5a48805cd4294992b48588258f61b2c5/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=ytGF1s7uadFaLKMMED0x68hcanpytqZDQ3eK0f5V7zY';
+          fetch(logicAppEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticket_id: ticketId, operation_type: 'queryOrder' })
+          })
+          .then(response => response.json())
+          .then(orderData => {
+            if (orderData && orderData.orderLines && orderData.orderLines.length > 0) {
+              // Check if all order lines are cancelled
+              const allCancelled = orderData.orderLines.every(item => (item.order_status || '').toLowerCase() === 'cancelled');
+              let detailsText = '';
+              if (orderData.customer_order) {
+                detailsText += `<strong>Customer Order:</strong> ${orderData.customer_order}<br><br>`;
+              }
+              orderData.orderLines.forEach((item, index) => {
+                detailsText += `<strong>Order Line ${index + 1}:</strong><br>`;
+                detailsText += `&nbsp;&nbsp;<strong>Status:</strong> ${item.order_status || 'N/A'}<br>`;
+                detailsText += `&nbsp;&nbsp;<strong>Delivery Name:</strong> ${item.delivery_name || 'N/A'}<br>`;
+                detailsText += `&nbsp;&nbsp;<strong>Delivery Address:</strong> ${item.delivery_address1 || 'N/A'}<br>`;
+                if (item.item_name) {
+                  detailsText += `&nbsp;&nbsp;<strong>Item Name:</strong> ${item.item_name}<br>`;
+                }
+                detailsText += `&nbsp;&nbsp;<strong>Part Number:</strong> ${item.part_number || 'N/A'}<br>`;
+                detailsText += `&nbsp;&nbsp;<strong>Quantity Required:</strong> ${item.qty_required !== undefined ? item.qty_required : 'N/A'}<br><br>`;
+              });
+              if (allCancelled) {
+                showNotification(
+                  '<strong>Previous order for this ticket was cancelled. You may submit a new order.</strong><br><br>' + detailsText,
+                  'warning',
+                  true
+                );
+                // Do NOT disable submit button or close modal
+              } else {
+                showNotification(
+                  '<strong>An order already exists for this ticket.</strong><br><br>' + detailsText,
+                  'error',
+                  true
+                );
+                // After dismiss, close the modal
+                setTimeout(() => {
+                  const notif = document.querySelector('.notification.error');
+                  if (notif) {
+                    const btn = notif.querySelector('button');
+                    if (btn) {
+                      btn.addEventListener('click', () => {
+                        client.invoke('destroy');
+                      });
+                    }
+                  }
+                }, 0);
+              }
+            }
+          })
+          .catch(err => {
+            // Optionally log or ignore
+          });
+        }
+
+        // Listen for ticketDataReady event from sidebar
+        const ticketData = data.ticketData;
+        const requesterData = data.requesterData;
+        const orderId = data.orderId;
+
+        if (orderId) {
+          document.getElementById('orderId').value = orderId;
+        }
+
+        // Hide loading indicator and show the form once data is loaded
+        document.getElementById('loading-indicator').style.display = 'none';
+        document.getElementById('order-form').classList.remove('hidden');
+
+        // In the ticketDataReady event, set window._lastTicketId
+        window._lastTicketId = data && data.ticketData && data.ticketData.id;
+      });
+
+      // Update the Get Address button handler
+      document.getElementById('getAddressBtn').addEventListener('click', async function(e) {
+        e.preventDefault();
+        const chargebeeId = window._lastChargebeeId;
+        
+        if (!chargebeeId) {
+          showNotification('No Chargebee ID available.', 'warning', true);
+          return;
+        }
+
+        const data = await handleLogicAppCall(
+          'https://prod-56.uksouth.logic.azure.com:443/workflows/5a48805cd4294992b48588258f61b2c5/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=ytGF1s7uadFaLKMMED0x68hcanpytqZDQ3eK0f5V7zY',
+          { customer_chargebee_id: chargebeeId }
+        );
+
+        if (data) {
+          // Map the Logic App response fields to our form fields
+          document.getElementById('addr1').value = data.line1 || '';
+          document.getElementById('addr2').value = data.line2 || '';
+          document.getElementById('addr3').value = data.line3 || '';
+          document.getElementById('town').value = data.city || '';
+          document.getElementById('postcode').value = data.zip || '';
+      }
+        validateOrderItems(); // Re-validate after Get Address button click
+      });
+
+      // Add event listeners for remove buttons
+      document.querySelectorAll('.remove-item-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const targetId = this.dataset.target;
+          const targetBox = document.getElementById(targetId);
+          if (targetBox) {
+            targetBox.classList.add('hidden');
+            // Reset values of the removed item
+            const itemSelect = targetBox.querySelector('select');
+            const qtyInput = targetBox.querySelector('input[type="number"]');
+            if (itemSelect) itemSelect.value = "";
+            if (qtyInput) qtyInput.value = "0";
+            // Always enable add button if any are hidden
+            const order2 = document.getElementById('order2');
+            const order3 = document.getElementById('order3');
+            if (order2.classList.contains('hidden') || order3.classList.contains('hidden')) {
+              document.getElementById('addItemBtn').disabled = false;
+            }
+            // Re-validate the form to update submit button state
+            validateOrderItems();
+          }
+        });
+      });
+
+      // Add event listener for address confirmation checkbox to trigger validation (only once)
+      const addressCheckbox = document.getElementById('addressConfirmed');
+      if (addressCheckbox) {
+        addressCheckbox.addEventListener('change', validateOrderItems);
+      }
+
+      // Call validateOrderItems on page load to set initial state
+      validateOrderItems();
+
+      // Map item to max quantity
+      const itemMaxQty = {
+        'dns': 4,
+        'router_upgrade': 4,
+        'pod_order': 4,
+        'wifi_guarantee_order': 4,
+        'existing_wifi_guarantee_order': 4,
+        'returns_bag': 1,
+        'ethernet_cable': 1,
+        'power_cable': 1
+      };
+
+      // Update max attribute and validation on item change
+      function updateQtyMax(itemSelectId, qtyInputId) {
+        const itemValue = document.getElementById(itemSelectId).value;
+        const qtyInput = document.getElementById(qtyInputId);
+        const max = itemMaxQty[itemValue] || 4;
+        qtyInput.max = max;
+        if (parseInt(qtyInput.value) > max) {
+          qtyInput.value = max;
+        }
+      }
+
+      // Attach to all item selects
+      ['item1', 'item2', 'item3'].forEach((itemId, idx) => {
+        const qtyId = 'qty' + (idx + 1);
+        document.getElementById(itemId).addEventListener('change', function() {
+          updateQtyMax(itemId, qtyId);
+        });
+      });
+
+      // Also enforce in qty input event
+      ['qty1', 'qty2', 'qty3'].forEach((qtyId, idx) => {
+        const itemId = 'item' + (idx + 1);
+        document.getElementById(qtyId).addEventListener('input', function() {
+          updateQtyMax(itemId, qtyId);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

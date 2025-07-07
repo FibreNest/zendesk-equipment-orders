@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Equipment Order</title>
+  <script src="https://assets.zendesk.com/apps/sdk/2.0/zaf_sdk.js"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+    }
+    #launch, #cancelOrder { 
+      width: 100%; 
+      padding: 12px; 
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    #launch {
+      background-color: #03363d;
+      color: white;
+    }
+    #launch:hover {
+      background-color: #022b30;
+    }
+    #cancelOrder {
+      background-color: #dc3545;
+      color: white;
+    }
+    #cancelOrder:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <div class="button-container">
+    <button id="launch">New Order</button>
+    <button id="cancelOrder">Cancel Order</button>
+  </div>
+  <script>
+    const client = ZAFClient.init();
+
+    // Function to disable buttons and potentially show a message
+    function disableOrderButtons(ticketStatus) {
+      const launchButton = document.getElementById('launch');
+      const cancelButton = document.getElementById('cancelOrder');
+
+      if (ticketStatus === 'closed' || ticketStatus === 'solved') {
+        launchButton.disabled = true;
+        cancelButton.disabled = true;
+        launchButton.textContent = 'Ticket Closed';
+        cancelButton.textContent = 'Ticket Closed';
+        launchButton.style.backgroundColor = '#cccccc';
+        cancelButton.style.backgroundColor = '#cccccc';
+        launchButton.style.cursor = 'not-allowed';
+        cancelButton.style.cursor = 'not-allowed';
+      }
+    }
+
+    // Initial check for ticket status when the app loads
+    client.get(['ticket']).then(function(data) {
+      const ticket = data.ticket;
+      if (ticket && ticket.status) {
+        console.log('Ticket status on load:', ticket.status);
+        disableOrderButtons(ticket.status);
+      }
+    }).catch(function(err) {
+      console.error('Error fetching ticket status on load:', err);
+    });
+
+    document.getElementById('launch').addEventListener('click', function () {
+      // Get ticket and requester data first in the sidebar
+      client.get(['ticket']).then(function(data) {
+        const ticket = data.ticket;
+        const requesterId = ticket.requester.id;
+
+        if (!ticket || !requesterId) {
+          console.error('Error getting ticket or requester data in sidebar.');
+          alert('Could not load ticket data. Please ensure the ticket is saved.');
+          return;
+        }
+
+        // Generate Order ID: FN-TicketNumber-YYMMDDHH24MI
+        const now = new Date();
+        const year = now.getFullYear().toString().slice(-2); // Last two digits of the year
+        const month = (now.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+
+        const formattedTimestamp = `${year}${month}${day}${hours}${minutes}`;
+        const orderId = `FN-${ticket.id}-${formattedTimestamp}`;
+        console.log(`Generated Order ID: ${orderId}`);
+
+        // Now fetch the full user object using the requesterId
+        client.request({
+          url: `/api/v2/users/${requesterId}.json`,
+          type: 'GET',
+          dataType: 'json'
+        }).then(function(userData) {
+          const fullUser = userData.user;
+
+          // Now open the modal and pass the full user object
+      client.invoke('instances.create', {
+        location: 'modal',
+        url: 'assets/order_form.html',
+        size: { width: '700px', height: '700px' }
+          }).then(function(modalContext) {
+            const modalClient = client.instance(modalContext['instances.create'][0].instanceGuid);
+
+            setTimeout(() => {
+              modalClient.trigger('ticketDataReady', { ticketData: ticket, requesterData: fullUser, orderId: orderId });
+              console.log('Triggered ticketDataReady event in modal with data:', { ticketData: ticket, requesterData: fullUser, orderId: orderId });
+            }, 500);
+
+            modalClient.on('modal.close', function() {
+              console.log('Modal was closed.');
+            });
+          }).catch(function(err) {
+            console.error('Error creating or communicating with modal:', err);
+            alert('Error opening the order form modal.');
+          });
+        }).catch(function(err) {
+          console.error('Error fetching full user data:', err);
+          alert('Could not load full user data.');
+        });
+      }).catch(function(err) {
+        console.error('Error fetching data in sidebar:', err);
+        alert('Error loading necessary ticket data.');
+      });
+    });
+
+    document.getElementById('cancelOrder').addEventListener('click', function() {
+      client.get(['ticket']).then(function(data) {
+        const ticket = data.ticket;
+
+        if (!ticket || !ticket.id) {
+          console.error('Error getting ticket ID for cancel form.');
+          alert('Could not load ticket data. Please ensure the ticket is saved.');
+          return;
+        }
+
+        // Open the cancel order form modal and pass ticketId
+        client.invoke('instances.create', {
+          location: 'modal',
+          url: 'assets/cancel_order_form.html',
+          size: { width: '440px', height: '600px' }
+        }).then(function(modalContext) {
+          const modalClient = client.instance(modalContext['instances.create'][0].instanceGuid);
+
+          setTimeout(() => {
+            modalClient.trigger('ticketIdReadyForCancel', { ticketId: ticket.id });
+            console.log('Triggered ticketIdReadyForCancel event in cancel modal with ticketId:', ticket.id);
+          }, 100);
+
+          modalClient.on('modal.close', function() {
+            console.log('Cancel Order modal was closed.');
+          });
+        }).catch(function(err) {
+          console.error('Error opening cancel order form:', err);
+          alert('Error opening the cancel order form.');
+        });
+      }).catch(function(err) {
+        console.error('Error fetching ticket data for cancel modal:', err);
+        alert('Error loading ticket data for cancel form.');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "app": {
+    "name": "Equipment Order",
+    "description": "Place and manage equipment orders from the ticket sidebar"
+  }
+}

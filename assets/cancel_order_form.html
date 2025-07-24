@@ -561,7 +561,9 @@
           const successMessage = successData && successData.body && successData.body.success ? successData.body.success : 'Order cancellation request has been submitted';
           showNotification(successMessage, 'success', false);
           
-          // Add a comment to the ticket
+          // Add an internal comment to the ticket
+          // Commented out - comments are now handled by Logic App
+          /*
           if (ticketId) {
             await client.request({
               url: '/api/v2/tickets/' + ticketId + '.json',
@@ -571,7 +573,7 @@
                 ticket: {
                   comment: {
                     body: `Order cancellation requested for Ticket ID: ${ticketId}`,
-                    public: true
+                    public: false
                   }
                 }
               })
@@ -579,6 +581,7 @@
           } else {
             console.warn('Ticket ID not available, could not add comment to ticket.');
           }
+          */
 
           // Close the modal after a short delay
           setTimeout(() => {
